@@ -5,8 +5,7 @@ set -e
 echo "Starting code-server with UID: $(id -u), GID: $(id -g)"
 echo "Using workspace directory: ${DEFAULT_WORKSPACE}"
 
-exec > >(tee -a /dev/stdout)
-exec 2> >(tee -a /dev/stderr >&2)
+# Note: Removed bash-specific redirection that was causing the error
 
 # Ensure our directories exist
 mkdir -p "${DEFAULT_WORKSPACE}" /tmp/config /tmp/data /tmp/home
@@ -16,7 +15,7 @@ mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp
 echo "Setting up code-server configuration..."
 mkdir -p /tmp/config
 cat > /tmp/config/config.yaml <<EOL
-bind-addr: 0.0.0.0:8443
+bind-addr: 0.0.0.0:8080
 auth: password
 password: ${PASSWORD:-$(date +%s | sha256sum | base64 | head -c 32)}
 cert: false
@@ -34,21 +33,29 @@ if [ -z "$CODE_SERVER_BIN" ]; then
   exit 1
 fi
 
-echo "Starting code-server..."
-# Start code-server
+echo "Starting code-server on port 8080..."
+# Start code-server in the background
 "$CODE_SERVER_BIN" \
   --config=/tmp/config/config.yaml \
   --user-data-dir=/tmp/data \
   --disable-telemetry \
   --disable-update-check \
-  --bind-addr=0.0.0.0:8443 \
-  ${DEFAULT_WORKSPACE}
+  --bind-addr=0.0.0.0:8080 \
+  "${DEFAULT_WORKSPACE}" &
 
+CODE_SERVER_PID=$!
 
 # Give code-server a moment to start
 sleep 2
 
-  echo "Starting Nginx for WebSocket proxying..."
-# Start Nginx in the background
-exec nginx -g "daemon off;" &
-NGINX_PID=$!
+# Check if code-server started successfully
+if kill -0 $CODE_SERVER_PID 2>/dev/null; then
+  echo "✅ code-server started successfully (PID: $CODE_SERVER_PID)"
+else
+  echo "❌ code-server failed to start"
+  exit 1
+fi
+
+echo "Starting Nginx for WebSocket proxying on port 8443..."
+# Start Nginx in the foreground
+exec nginx -g "daemon off;"
