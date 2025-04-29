@@ -1,35 +1,32 @@
 #!/bin/sh
 set -e
 
-# Print some debug information
+# Print debug information
 echo "Starting code-server with UID: $(id -u), GID: $(id -g)"
 echo "Using workspace directory: ${DEFAULT_WORKSPACE}"
 
-# Note: Removed bash-specific redirection that was causing the error
+# Explicitly set HOME environment variable to writable location
+export HOME=/tmp/home
+echo "Setting HOME to $HOME"
+mkdir -p $HOME
 
-# Create symlink for /config directory to address the ENOENT errors
-if [ -L "/config" ] || [ -d "/config" ]; then
-  echo "Config directory already exists"
-else
-  echo "Creating symlink for /config directory to /tmp/config"
-  mkdir -p /tmp/config
-  ln -sf /tmp/config /config
-fi
-
-# Ensure our directories exist
-mkdir -p "${DEFAULT_WORKSPACE}" /tmp/config /tmp/data /tmp/home
+# Create necessary directories in writable locations
+mkdir -p "${DEFAULT_WORKSPACE}" /tmp/data
 mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp
-# Create config subdirectories to avoid ENOENT errors
-mkdir -p /tmp/config/.local /tmp/config/.cache
+mkdir -p /tmp/config/.local/share/code-server /tmp/config/.cache
 
-# Create a minimal config for code-server if it doesn't exist
-echo "Setting up code-server configuration..."
+# Create required /config directory structure
 mkdir -p /tmp/config
+chmod -R 777 /tmp/config
+
+# Create a minimal config for code-server
+echo "Setting up code-server configuration..."
 cat > /tmp/config/config.yaml <<EOL
 bind-addr: 0.0.0.0:8080
 auth: password
 password: ${PASSWORD:-$(date +%s | sha256sum | base64 | head -c 32)}
 cert: false
+user-data-dir: /tmp/data
 EOL
 
 # Find the correct code-server executable
@@ -45,7 +42,9 @@ if [ -z "$CODE_SERVER_BIN" ]; then
 fi
 
 echo "Starting code-server on port 8080..."
-# Start code-server in the background
+
+# Override HOME explicitly for code-server
+HOME=/tmp/home XDG_CONFIG_HOME=/tmp/config \
 "$CODE_SERVER_BIN" \
   --config=/tmp/config/config.yaml \
   --user-data-dir=/tmp/data \
