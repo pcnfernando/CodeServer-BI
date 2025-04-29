@@ -27,7 +27,7 @@ RUN mkdir -p /config && \
     ln -sf /tmp/home /home/abc && \
     ln -sf /tmp/data /data
 
-# Install nginx for WebSocket support
+# Install nginx
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     curl \
@@ -41,17 +41,17 @@ RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null
     fi
 
 # Set up nginx directories with proper permissions for Choreo user
-RUN mkdir -p /tmp/nginx/cache && \
+RUN mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp && \
     mkdir -p /var/log/nginx && \
     touch /tmp/nginx.pid && \
-    chown -R 10500:10500 /tmp/nginx && \
+    chown -R 10500:10500 /tmp && \
     chown -R 10500:10500 /var/log/nginx && \
     chown -R 10500:10500 /etc/nginx/conf.d && \
-    chown -R 10500:10500 /tmp/nginx.pid && \
     chmod -R 666 /tmp/nginx.pid
 
-# Copy nginx configuration
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration files
+COPY ./nginx.conf /etc/nginx/nginx.conf
+COPY ./mime.types /etc/nginx/mime.types
 
 # Ensure the Choreo user has proper permissions
 RUN groupadd -g 10500 chouser || true && \
@@ -59,8 +59,8 @@ RUN groupadd -g 10500 chouser || true && \
     chown -R 10500:10500 /tmp/workspace /tmp/home /tmp/config /tmp/data
 
 # Prepare the entrypoint script
-COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Set up port
 EXPOSE 8443
@@ -69,7 +69,7 @@ EXPOSE 8443
 USER 10500
 
 # Use a custom entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Healthcheck to verify the application is running
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
