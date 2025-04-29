@@ -31,14 +31,6 @@ if [ -z "$CODE_SERVER_BIN" ]; then
   exit 1
 fi
 
-echo "Starting Nginx for WebSocket proxying..."
-# Start Nginx in the background
-exec nginx -g "daemon off;" &
-NGINX_PID=$!
-
-# Give Nginx a moment to start
-sleep 1
-
 echo "Starting code-server..."
 # Start code-server
 "$CODE_SERVER_BIN" \
@@ -48,3 +40,12 @@ echo "Starting code-server..."
   --disable-update-check \
   --bind-addr=0.0.0.0:8443 \
   ${DEFAULT_WORKSPACE}
+
+
+# Give code-server a moment to start
+sleep 2
+
+  echo "Starting Nginx for WebSocket proxying..."
+# Start Nginx in the background
+exec nginx -g "daemon off;" &
+NGINX_PID=$!
