@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  code-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-server-choreo
+    environment:
+      - PUID=10500
+      - PGID=10500
+      - TZ=Etc/UTC
+      - PASSWORD=your_password
+      # - HASHED_PASSWORD=your_hashed_password  # Uncomment if using hashed password instead
+      - DEFAULT_WORKSPACE=/tmp/workspace
+    ports:
+      - 8443:8443
+    restart: unless-stopped
+    # Add read-only flag to simulate Choreo environment
+    read_only: true
+    # Run as the Choreo user
+    user: "10500:10500"
+    # Add tmpfs for writable paths
+    tmpfs:
+      - /tmp
+      - /run
+      - /var/run
