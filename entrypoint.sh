@@ -7,9 +7,20 @@ echo "Using workspace directory: ${DEFAULT_WORKSPACE}"
 
 # Note: Removed bash-specific redirection that was causing the error
 
+# Create symlink for /config directory to address the ENOENT errors
+if [ -L "/config" ] || [ -d "/config" ]; then
+  echo "Config directory already exists"
+else
+  echo "Creating symlink for /config directory to /tmp/config"
+  mkdir -p /tmp/config
+  ln -sf /tmp/config /config
+fi
+
 # Ensure our directories exist
 mkdir -p "${DEFAULT_WORKSPACE}" /tmp/config /tmp/data /tmp/home
 mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp
+# Create config subdirectories to avoid ENOENT errors
+mkdir -p /tmp/config/.local /tmp/config/.cache
 
 # Create a minimal config for code-server if it doesn't exist
 echo "Setting up code-server configuration..."
