@@ -27,9 +27,13 @@ RUN mkdir -p /config && \
     ln -sf /tmp/home /home/abc && \
     ln -sf /tmp/data /data
 
-# Install gosu for easy step-down from root to Choreo user
-RUN apt-get update && apt-get install -y --no-install-recommends gosu && \
+# Install gosu for easy step-down from root to Choreo user and nginx for proxy
+RUN apt-get update && apt-get install -y --no-install-recommends gosu nginx && \
     rm -rf /var/lib/apt/lists/*
+
+# Copy nginx configuration
+COPY ./nginx.conf /etc/nginx/sites-available/code-server
+RUN ln -sf /etc/nginx/sites-available/code-server /etc/nginx/sites-enabled/default
 
 # Find the code-server executable path and create a symlink if needed
 RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null | head -n 1) && \
@@ -42,8 +46,6 @@ RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null
 RUN groupadd -g 10500 chouser || true && \
     useradd -u 10500 -g 10500 -d /home/abc -m chouser || true && \
     chown -R 10500:10500 /tmp/workspace /tmp/home /tmp/config /tmp/data
-
-COPY .trivyignore /
 
 # Prepare the entrypoint script
 COPY ./entrypoint.sh /entrypoint.sh

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# entrypoint.sh - Custom entrypoint for code-server in Choreo
+# entrypoint.sh - Custom entrypoint for code-server in Choreo with WebSocket support
 
 # Print some debug information
 echo "Starting code-server with UID: $(id -u), GID: $(id -g)"
@@ -19,8 +19,20 @@ password: ${PASSWORD:-$(date +%s | sha256sum | base64 | head -c 32)}
 cert: false
 EOL
 
+# Start Nginx in the background
+echo "Starting Nginx to handle WebSocket proxying..."
+nginx -g "daemon on;"
+sleep 1
+
+# Check if nginx started successfully
+if pgrep -x "nginx" > /dev/null; then
+  echo "Nginx started successfully"
+else
+  echo "WARNING: Nginx failed to start, proxy support may be limited"
+fi
+
 # Print some helpful information
-echo "code-server is starting up..."
+echo "code-server is starting up with WebSocket support..."
 echo "It will be available on port 8443"
 echo "Default workspace is set to ${DEFAULT_WORKSPACE}"
 
@@ -30,6 +42,7 @@ if [ ! -f "$CODE_SERVER_BIN" ] || [ ! -x "$CODE_SERVER_BIN" ]; then
   echo "Symlinked executable not found, searching for code-server..."
   CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null | head -n 1)
 fi
+
 if [ -z "$CODE_SERVER_BIN" ]; then
   echo "ERROR: Could not find code-server executable"
   # List potential locations to help debug
@@ -52,6 +65,18 @@ fi
 
 if [ ! -z "$CODE_SERVER_BIN" ]; then
   echo "Using code-server at: $CODE_SERVER_BIN"
-  # Call code-server directly
-  exec "$CODE_SERVER_BIN" --config=/tmp/config/config.yaml --user-data-dir=/tmp/data ${DEFAULT_WORKSPACE}
+  
+  # Set explicit WebSocket parameters
+  echo "Configuring for WebSocket support..."
+  
+  # Start code-server with the proper options for WebSocket support
+  exec "$CODE_SERVER_BIN" \
+    --config=/tmp/config/config.yaml \
+    --user-data-dir=/tmp/data \
+    --disable-telemetry \
+    --disable-update-check \
+    --without-connection-token \
+    --bind-addr=0.0.0.0:8443 \
+    --log debug \
+    ${DEFAULT_WORKSPACE}
 fi
