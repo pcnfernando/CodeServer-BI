@@ -5,6 +5,9 @@ set -e
 echo "Starting code-server with UID: $(id -u), GID: $(id -g)"
 echo "Using workspace directory: ${DEFAULT_WORKSPACE}"
 
+exec > >(tee -a /dev/stdout)
+exec 2> >(tee -a /dev/stderr >&2)
+
 # Ensure our directories exist
 mkdir -p "${DEFAULT_WORKSPACE}" /tmp/config /tmp/data /tmp/home
 mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp
