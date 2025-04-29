@@ -7,7 +7,7 @@ echo "Starting code-server with UID: $(id -u), GID: $(id -g)"
 echo "Using workspace directory: ${DEFAULT_WORKSPACE}"
 
 # Ensure our directories exist
-mkdir -p "${DEFAULT_WORKSPACE}" /tmp/config /tmp/data /tmp/home
+mkdir -p "${DEFAULT_WORKSPACE}" /tmp/config /tmp/data /tmp/home /tmp/nginx/cache
 
 # Create a minimal config for code-server if it doesn't exist
 echo "Setting up code-server configuration..."
@@ -19,21 +19,30 @@ password: ${PASSWORD:-$(date +%s | sha256sum | base64 | head -c 32)}
 cert: false
 EOL
 
-# Start Nginx in the background
+# Start Nginx in the background with configuration to use /tmp for writable paths
 echo "Starting Nginx to handle WebSocket proxying..."
-nginx -g "daemon on;"
-sleep 1
+nginx -g "daemon on; error_log /var/log/nginx/error.log; pid /tmp/nginx.pid;" -c /etc/nginx/conf.d/default.conf
+sleep 2
 
 # Check if nginx started successfully
 if pgrep -x "nginx" > /dev/null; then
   echo "Nginx started successfully"
 else
-  echo "WARNING: Nginx failed to start, proxy support may be limited"
+  echo "WARNING: Nginx failed to start, checking logs:"
+  cat /var/log/nginx/error.log 2>/dev/null || echo "No error logs found"
+  echo "Attempting to start nginx with default configuration..."
+  nginx -g "daemon on; error_log /var/log/nginx/error.log; pid /tmp/nginx.pid;"
+  sleep 1
+  if pgrep -x "nginx" > /dev/null; then
+    echo "Nginx started with default configuration"
+  else
+    echo "ERROR: Nginx failed to start with default configuration"
+  fi
 fi
 
 # Print some helpful information
 echo "code-server is starting up with WebSocket support..."
-echo "It will be available on port 8443"
+echo "It will be available on port 8080 via Nginx proxy"
 echo "Default workspace is set to ${DEFAULT_WORKSPACE}"
 
 # Find the correct code-server executable
@@ -65,9 +74,6 @@ fi
 
 if [ ! -z "$CODE_SERVER_BIN" ]; then
   echo "Using code-server at: $CODE_SERVER_BIN"
-  
-  # Set explicit WebSocket parameters
-  echo "Configuring for WebSocket support..."
   
   # Start code-server with the proper options for WebSocket support
   exec "$CODE_SERVER_BIN" \

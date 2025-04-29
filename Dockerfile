@@ -27,13 +27,11 @@ RUN mkdir -p /config && \
     ln -sf /tmp/home /home/abc && \
     ln -sf /tmp/data /data
 
-# Install gosu for easy step-down from root to Choreo user and nginx for proxy
-RUN apt-get update && apt-get install -y --no-install-recommends gosu nginx && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy nginx configuration
-COPY ./nginx.conf /etc/nginx/sites-available/code-server
-RUN ln -sf /etc/nginx/sites-available/code-server /etc/nginx/sites-enabled/default
+# Install nginx for WebSocket support
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Find the code-server executable path and create a symlink if needed
 RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null | head -n 1) && \
@@ -41,6 +39,19 @@ RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null
         echo "Creating symlink from $CODE_SERVER_BIN to /usr/bin/code-server"; \
         ln -sf "$CODE_SERVER_BIN" /usr/bin/code-server; \
     fi
+
+# Set up nginx directories with proper permissions for Choreo user
+RUN mkdir -p /tmp/nginx/cache && \
+    mkdir -p /var/log/nginx && \
+    touch /tmp/nginx.pid && \
+    chown -R 10500:10500 /tmp/nginx && \
+    chown -R 10500:10500 /var/log/nginx && \
+    chown -R 10500:10500 /etc/nginx/conf.d && \
+    chown -R 10500:10500 /tmp/nginx.pid && \
+    chmod -R 666 /tmp/nginx.pid
+
+# Copy nginx configuration
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
 # Ensure the Choreo user has proper permissions
 RUN groupadd -g 10500 chouser || true && \
