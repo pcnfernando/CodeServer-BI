@@ -19,6 +19,10 @@ mkdir -p /tmp/nginx/logs
 mkdir -p /tmp/nginx/conf
 chmod -R 777 /tmp/nginx
 
+# Create runtime directory with proper permissions for IPC sockets
+mkdir -p /tmp/runtime
+chmod 777 /tmp/runtime
+
 # Copy nginx configuration files to the writable location
 cp /etc/nginx/nginx.conf /tmp/nginx/conf/
 cp /etc/nginx/mime.types /tmp/nginx/conf/
