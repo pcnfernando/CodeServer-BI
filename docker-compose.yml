@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: code-server-choreo
+    container_name: code-server-devant
     environment:
       - PUID=10500
       - PGID=10500
@@ -16,9 +16,9 @@ services:
     ports:
       - 8443:8443
     restart: unless-stopped
-    # Add read-only flag to simulate Choreo environment
+    # Add read-only flag to simulate Devant environment
     read_only: true
-    # Run as the Choreo user
+    # Run as the Devant user
     user: "10500:10500"
     # Add tmpfs for writable paths
     tmpfs:

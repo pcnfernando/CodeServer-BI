@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# This script handles additional configuration needed for running in Choreo's read-only environment
+# This script handles additional configuration needed for running in Devant's read-only environment
 
-# Add a note about the Choreo user
-echo "Running as Choreo user (UID: ${PUID}, GID: ${PGID})"
+# Add a note about the Devant user
+echo "Running as Devant user (UID: ${PUID}, GID: ${PGID})"
 
-# Make sure we can work with the Choreo user
+# Make sure we can work with the Devant user
 if ! id -u ${PUID} >/dev/null 2>&1; then
     echo "Creating user with UID ${PUID} and GID ${PGID}"
     groupadd -g ${PGID} chouser 2>/dev/null || true

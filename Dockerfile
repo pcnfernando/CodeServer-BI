@@ -2,10 +2,10 @@
 FROM lscr.io/linuxserver/code-server:latest
 
 # Set labels for documentation
-LABEL maintainer="Your Name <your.email@example.com>"
-LABEL description="VS Code Server for Choreo deployment"
+LABEL maintainer="pcnfernando@gmail.com>"
+LABEL description="VS Code Server for Devant"
 
-# Set environment variables for Choreo
+# Set environment variables for Devant
 ENV PUID=10500
 ENV PGID=10500
 ENV TZ=Etc/UTC
@@ -51,7 +51,7 @@ RUN mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY ./mime.types /etc/nginx/mime.types
 
-# Ensure the Choreo user has proper permissions
+# Ensure the Devant user has proper permissions
 RUN groupadd -g 10500 chouser || true && \
     useradd -u 10500 -g 10500 -d /home/abc -m chouser || true && \
     chown -R 10500:10500 /tmp/workspace /tmp/home /tmp/config /tmp/data
