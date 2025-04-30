@@ -69,5 +69,4 @@ exec "$CODE_SERVER_BIN" \
   --disable-update-check \
   --auth none \
   --bind-addr=0.0.0.0:8080 \
-  --allow-http \
   "${DEFAULT_WORKSPACE}"
