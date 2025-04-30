@@ -9,12 +9,8 @@ LABEL description="VS Code Server for Choreo deployment"
 ENV PUID=10500
 ENV PGID=10500
 ENV TZ=Etc/UTC
-# You can set a password or use a hashed password
-ENV PASSWORD=your_password
-# ENV HASHED_PASSWORD=your_hashed_password
-
-# Set up for Choreo's read-only filesystem by making writable directories in /tmp
-# Set default workspace to writable location
+# No password needed since we're using auth: none
+ENV PASSWORD=""
 ENV DEFAULT_WORKSPACE=/tmp/workspace
 
 # Create necessary writable directories in /tmp
@@ -27,10 +23,13 @@ RUN mkdir -p /config && \
     ln -sf /tmp/home /home/abc && \
     ln -sf /tmp/data /data
 
-# Install nginx
+# Install nginx and debug tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     curl \
+    iputils-ping \
+    net-tools \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Find the code-server executable path and create a symlink if needed
@@ -47,11 +46,17 @@ RUN mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_
     chown -R 10500:10500 /tmp && \
     chown -R 10500:10500 /var/log/nginx && \
     chown -R 10500:10500 /etc/nginx/conf.d && \
-    chmod -R 666 /tmp/nginx.pid
+    chmod -R 777 /tmp && \
+    chmod -R 777 /var/log/nginx && \
+    chmod 666 /tmp/nginx.pid
 
 # Copy nginx configuration files
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY ./mime.types /etc/nginx/mime.types
+
+# Make sure nginx config is editable in read-only environments
+RUN chown -R 10500:10500 /etc/nginx && \
+    chmod -R 755 /etc/nginx
 
 # Ensure the Choreo user has proper permissions
 RUN groupadd -g 10500 chouser || true && \
@@ -60,7 +65,8 @@ RUN groupadd -g 10500 chouser || true && \
 
 # Prepare the entrypoint script
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    chown 10500:10500 /usr/local/bin/entrypoint.sh
 
 # Set up port
 EXPOSE 8443

@@ -4,6 +4,7 @@ set -e
 # Print some debug information
 echo "Starting code-server with UID: $(id -u), GID: $(id -g)"
 echo "Using workspace directory: ${DEFAULT_WORKSPACE}"
+echo "Setting up code-server configuration..."
 
 # Create directories in /tmp
 mkdir -p "${DEFAULT_WORKSPACE}" /tmp/config /tmp/data /tmp/home
@@ -15,6 +16,9 @@ mkdir -p /tmp/config/.cache
 
 # Ensure directories have proper permissions
 chmod -R 777 /tmp/config
+chmod -R 777 /tmp/data
+chmod -R 777 /tmp/home
+chmod -R 777 /tmp/workspace
 
 # Set environment variables to redirect code-server data to /tmp locations
 export XDG_CONFIG_HOME="/tmp/config"
@@ -24,8 +28,14 @@ export XDG_STATE_HOME="/tmp/config/.local/state"
 export XDG_RUNTIME_DIR="/tmp/runtime"
 export HOME="/tmp/home"
 
-# CRITICAL CHANGE: Disable password authentication for WebSockets to work
-echo "Setting up code-server configuration..."
+# Print environment variables for debugging
+echo "Using environment variables:"
+echo "XDG_CONFIG_HOME=${XDG_CONFIG_HOME}"
+echo "XDG_CACHE_HOME=${XDG_CACHE_HOME}"
+echo "XDG_DATA_HOME=${XDG_DATA_HOME}"
+echo "HOME=${HOME}"
+
+# Create a basic code-server config file - CRITICAL: auth set to none
 cat > /tmp/config/config.yaml <<EOL
 bind-addr: 0.0.0.0:8080
 auth: none
@@ -45,15 +55,14 @@ if [ -z "$CODE_SERVER_BIN" ]; then
   exit 1
 fi
 
-# Debug message showing environment variables
-echo "Using environment variables:"
-echo "XDG_CONFIG_HOME=${XDG_CONFIG_HOME}"
-echo "XDG_CACHE_HOME=${XDG_CACHE_HOME}"
-echo "XDG_DATA_HOME=${XDG_DATA_HOME}"
-echo "HOME=${HOME}"
+# Set up correct temp locations for nginx
+touch /tmp/nginx.pid
+chmod 666 /tmp/nginx.pid
+mkdir -p /var/log/nginx
+chmod -R 777 /var/log/nginx
 
-echo "Starting code-server on port 8080 with auth disabled for WebSockets..."
 # Start code-server in the background with redirected paths
+echo "Starting code-server on port 8080 with auth disabled for WebSockets..."
 "$CODE_SERVER_BIN" \
   --config=/tmp/config/config.yaml \
   --user-data-dir=/tmp/data \
@@ -76,6 +85,6 @@ else
   exit 1
 fi
 
-echo "Starting Nginx for WebSocket proxying on port 8443..."
 # Start Nginx in the foreground
+echo "Starting Nginx for WebSocket proxying on port 8443..."
 exec nginx -g "daemon off;"
