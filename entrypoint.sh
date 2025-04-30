@@ -14,6 +14,10 @@ mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp
 mkdir -p /tmp/config/.local/share/code-server
 mkdir -p /tmp/config/.cache
 
+# Create a writable log directory in /tmp for nginx
+mkdir -p /tmp/nginx/logs
+chmod -R 777 /tmp/nginx
+
 # Ensure directories have proper permissions
 chmod -R 777 /tmp/config
 chmod -R 777 /tmp/data
@@ -58,9 +62,6 @@ fi
 # Set up correct temp locations for nginx
 touch /tmp/nginx.pid
 chmod 666 /tmp/nginx.pid
-# Create a writable log directory in /tmp instead of using /var/log/nginx
-mkdir -p /tmp/nginx/logs
-chmod -R 777 /tmp/nginx
 
 # Start code-server in the background with redirected paths
 echo "Starting code-server on port 8080 with auth disabled for WebSockets..."
@@ -86,5 +87,6 @@ else
   exit 1
 fi
 
-"Starting Nginx for WebSocket proxying on port 8443..."
-exec nginx -g "daemon off;"
+# Start Nginx in the foreground using our config from /tmp
+echo "Starting Nginx for WebSocket proxying on port 8443..."
+exec nginx -c /tmp/nginx/conf/nginx.conf -g "daemon off;"
