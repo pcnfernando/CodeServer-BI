@@ -16,7 +16,15 @@ mkdir -p /tmp/config/.cache
 
 # Create a writable log directory in /tmp for nginx
 mkdir -p /tmp/nginx/logs
+mkdir -p /tmp/nginx/conf
 chmod -R 777 /tmp/nginx
+
+# Copy nginx configuration files to the writable location
+cp /etc/nginx/nginx.conf /tmp/nginx/conf/
+cp /etc/nginx/mime.types /tmp/nginx/conf/
+
+# Update the include path in the nginx.conf file to point to the new location
+sed -i 's|include[[:space:]]*mime.types;|include /tmp/nginx/conf/mime.types;|g' /tmp/nginx/conf/nginx.conf
 
 # Ensure directories have proper permissions
 chmod -R 777 /tmp/config

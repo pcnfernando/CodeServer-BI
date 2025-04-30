@@ -39,23 +39,17 @@ RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null
         ln -sf "$CODE_SERVER_BIN" /usr/bin/code-server; \
     fi
 
-# Set up nginx directories with proper permissions for Choreo user
-# Don't try to modify /var/log/nginx as it's in a read-only filesystem
+# Set up nginx directories with proper permissions
 RUN mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp && \
-    mkdir -p /tmp/nginx/logs && \
     touch /tmp/nginx.pid && \
     chown -R 10500:10500 /tmp && \
-    chown -R 10500:10500 /etc/nginx/conf.d && \
     chmod -R 777 /tmp && \
     chmod 666 /tmp/nginx.pid
 
-# Copy nginx configuration files
+# Copy nginx configuration files to the standard location
+# They will be copied to /tmp at runtime
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY ./mime.types /etc/nginx/mime.types
-
-# Make sure nginx config is editable in read-only environments
-RUN chown -R 10500:10500 /etc/nginx && \
-    chmod -R 755 /etc/nginx
 
 # Ensure the Choreo user has proper permissions
 RUN groupadd -g 10500 chouser || true && \
@@ -64,7 +58,9 @@ RUN groupadd -g 10500 chouser || true && \
 
 # Prepare the entrypoint script
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh && \
+# Ensure the entrypoint script has correct line endings and is executable
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
     chown 10500:10500 /usr/local/bin/entrypoint.sh
 
 # Set up port
