@@ -45,7 +45,7 @@ RUN groupadd -g 10500 chouser || true && \
     chown -R 10500:10500 /tmp/workspace /tmp/home /tmp/config /tmp/data
 
 # Prepare the entrypoint script
-COPY ./direct-entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 # Ensure the entrypoint script has correct line endings and is executable
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh && \
