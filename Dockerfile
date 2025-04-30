@@ -40,14 +40,13 @@ RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null
     fi
 
 # Set up nginx directories with proper permissions for Choreo user
+# Don't try to modify /var/log/nginx as it's in a read-only filesystem
 RUN mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp && \
-    mkdir -p /var/log/nginx && \
+    mkdir -p /tmp/nginx/logs && \
     touch /tmp/nginx.pid && \
     chown -R 10500:10500 /tmp && \
-    chown -R 10500:10500 /var/log/nginx && \
     chown -R 10500:10500 /etc/nginx/conf.d && \
     chmod -R 777 /tmp && \
-    chmod -R 777 /var/log/nginx && \
     chmod 666 /tmp/nginx.pid
 
 # Copy nginx configuration files

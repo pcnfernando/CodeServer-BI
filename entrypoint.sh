@@ -58,8 +58,9 @@ fi
 # Set up correct temp locations for nginx
 touch /tmp/nginx.pid
 chmod 666 /tmp/nginx.pid
-mkdir -p /var/log/nginx
-chmod -R 777 /var/log/nginx
+# Create a writable log directory in /tmp instead of using /var/log/nginx
+mkdir -p /tmp/nginx/logs
+chmod -R 777 /tmp/nginx
 
 # Start code-server in the background with redirected paths
 echo "Starting code-server on port 8080 with auth disabled for WebSockets..."
@@ -85,6 +86,5 @@ else
   exit 1
 fi
 
-# Start Nginx in the foreground
-echo "Starting Nginx for WebSocket proxying on port 8443..."
+"Starting Nginx for WebSocket proxying on port 8443..."
 exec nginx -g "daemon off;"
