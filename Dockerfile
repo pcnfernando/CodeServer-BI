@@ -23,13 +23,13 @@ RUN mkdir -p /config && \
     ln -sf /tmp/home /home/abc && \
     ln -sf /tmp/data /data
 
-# Install nginx and debug tools
+# Install debug tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
     curl \
     iputils-ping \
     net-tools \
     procps \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # Find the code-server executable path and create a symlink if needed
@@ -63,8 +63,8 @@ RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh && \
     chown 10500:10500 /usr/local/bin/entrypoint.sh
 
-# Set up port
-EXPOSE 8443
+# Expose port 8080 directly (code-server's default port)
+EXPOSE 8080
 
 # Explicitly set the user to 10500
 USER 10500
@@ -74,4 +74,4 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Healthcheck to verify the application is running
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8443/ || exit 1
+    CMD curl -f http://localhost:8080/ || exit 1
