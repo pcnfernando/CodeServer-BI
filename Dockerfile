@@ -3,7 +3,7 @@ FROM lscr.io/linuxserver/code-server:latest
 
 # Set labels for documentation
 LABEL maintainer="Your Name <your.email@example.com>"
-LABEL description="VS Code Server for Choreo deployment"
+LABEL description="VS Code Server for Choreo deployment (direct without Nginx)"
 
 # Set environment variables for Choreo
 ENV PUID=10500
@@ -23,13 +23,13 @@ RUN mkdir -p /config && \
     ln -sf /tmp/home /home/abc && \
     ln -sf /tmp/data /data
 
-# Install nginx and debug tools
+# Install debug tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
     curl \
     iputils-ping \
     net-tools \
     procps \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # Find the code-server executable path and create a symlink if needed
@@ -39,32 +39,20 @@ RUN CODE_SERVER_BIN=$(find / -name "code-server" -type f -executable 2>/dev/null
         ln -sf "$CODE_SERVER_BIN" /usr/bin/code-server; \
     fi
 
-# Set up nginx directories with proper permissions
-RUN mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp && \
-    touch /tmp/nginx.pid && \
-    chown -R 10500:10500 /tmp && \
-    chmod -R 777 /tmp && \
-    chmod 666 /tmp/nginx.pid
-
-# Copy nginx configuration files to the standard location
-# They will be copied to /tmp at runtime
-COPY ./nginx.conf /etc/nginx/nginx.conf
-COPY ./mime.types /etc/nginx/mime.types
-
 # Ensure the Choreo user has proper permissions
 RUN groupadd -g 10500 chouser || true && \
     useradd -u 10500 -g 10500 -d /home/abc -m chouser || true && \
     chown -R 10500:10500 /tmp/workspace /tmp/home /tmp/config /tmp/data
 
 # Prepare the entrypoint script
-COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./direct-entrypoint.sh /usr/local/bin/entrypoint.sh
 # Ensure the entrypoint script has correct line endings and is executable
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh && \
     chown 10500:10500 /usr/local/bin/entrypoint.sh
 
-# Set up port
-EXPOSE 8443
+# Expose port 8080 directly (code-server's default port)
+EXPOSE 8080
 
 # Explicitly set the user to 10500
 USER 10500
@@ -74,4 +62,4 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Healthcheck to verify the application is running
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8443/ || exit 1
+    CMD curl -f http://localhost:8080/ || exit 1
