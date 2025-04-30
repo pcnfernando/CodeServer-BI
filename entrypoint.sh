@@ -40,7 +40,6 @@ bind-addr: 0.0.0.0:8080
 auth: none
 password: 
 cert: false
-allow-http: true
 disable-telemetry: true
 disable-update-check: true
 EOL
