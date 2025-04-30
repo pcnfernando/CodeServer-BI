@@ -20,8 +20,8 @@ mkdir -p /tmp/nginx/conf
 chmod -R 777 /tmp/nginx
 
 # Create runtime directory with proper permissions for IPC sockets
-mkdir -p /tmp/runtime
-chmod 777 /tmp/runtime
+ mkdir -p /tmp/runtime
+ chmod 777 /tmp/runtime
 
 # Copy nginx configuration files to the writable location
 cp /etc/nginx/nginx.conf /tmp/nginx/conf/
@@ -34,7 +34,24 @@ sed -i 's|include[[:space:]]*mime.types;|include /tmp/nginx/conf/mime.types;|g' 
 chmod -R 777 /tmp/config
 chmod -R 777 /tmp/data
 chmod -R 777 /tmp/home
-chmod -R 777 /tmp/workspace
+chmod -R 777 "${DEFAULT_WORKSPACE}"
+
+# Set up symlink for extensions
+if [ -d "/opt/code-server/extensions" ]; then
+  mkdir -p /tmp/config/.local/share/code-server/extensions
+  echo "Setting up extensions from global location..."
+  for ext in /opt/code-server/extensions/*; do
+    if [ -d "$ext" ]; then
+      ln -sf "$ext" /tmp/config/.local/share/code-server/extensions/
+    fi
+  done
+fi
+
+# Copy project template if workspace is empty
+if [ -d "/opt/project-template" ] && [ -z "$(ls -A ${DEFAULT_WORKSPACE} 2>/dev/null)" ]; then
+  echo "Copying Ballerina project template to workspace..."
+  cp -r /opt/project-template/* "${DEFAULT_WORKSPACE}/"
+fi
 
 # Set environment variables to redirect code-server data to /tmp locations
 export XDG_CONFIG_HOME="/tmp/config"
@@ -44,12 +61,17 @@ export XDG_STATE_HOME="/tmp/config/.local/state"
 export XDG_RUNTIME_DIR="/tmp/runtime"
 export HOME="/tmp/home"
 
+# Set Java and Ballerina environment variables
+export JAVA_HOME=/opt/java/jdk-21.0.5+11
+export PATH=$JAVA_HOME/bin:$PATH
+
 # Print environment variables for debugging
 echo "Using environment variables:"
 echo "XDG_CONFIG_HOME=${XDG_CONFIG_HOME}"
 echo "XDG_CACHE_HOME=${XDG_CACHE_HOME}"
 echo "XDG_DATA_HOME=${XDG_DATA_HOME}"
 echo "HOME=${HOME}"
+echo "JAVA_HOME=${JAVA_HOME}"
 
 # Create a basic code-server config file - CRITICAL: auth set to none
 cat > /tmp/config/config.yaml <<EOL
@@ -75,11 +97,24 @@ fi
 touch /tmp/nginx.pid
 chmod 666 /tmp/nginx.pid
 
+# Configure code-server settings for Ballerina
+mkdir -p /tmp/config/Machine
+cat > /tmp/config/Machine/settings.json <<EOL
+{
+    "ballerina.home": "/usr/lib/ballerina",
+    "ballerina.plugin.firststart": false,
+    "ballerina.debugLog": false,
+    "editor.rulers": [120],
+    "java.home": "${JAVA_HOME}"
+}
+EOL
+
 # Start code-server in the background with redirected paths
 echo "Starting code-server on port 8080 with auth disabled for WebSockets..."
 "$CODE_SERVER_BIN" \
   --config=/tmp/config/config.yaml \
   --user-data-dir=/tmp/data \
+  --extensions-dir=/tmp/config/.local/share/code-server/extensions \
   --disable-telemetry \
   --disable-update-check \
   --auth none \
