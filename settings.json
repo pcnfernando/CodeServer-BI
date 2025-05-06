@@ -1,0 +1,5 @@
+{
+    "ballerina-vscode.trace.server": "verbose",
+    "ballerina.traceLog": true,
+    "ballerina.debugLog": true
+}

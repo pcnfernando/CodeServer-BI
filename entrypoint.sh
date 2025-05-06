@@ -105,7 +105,10 @@ cat > /tmp/config/Machine/settings.json <<EOL
     "ballerina.plugin.firststart": false,
     "ballerina.debugLog": false,
     "editor.rulers": [120],
-    "java.home": "${JAVA_HOME}"
+    "java.home": "${JAVA_HOME}",
+    "ballerina-vscode.trace.server": "verbose",
+    "ballerina.traceLog": true,
+    "ballerina.debugLog": true
 }
 EOL
 
