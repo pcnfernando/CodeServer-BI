@@ -36,7 +36,7 @@ RUN curl -o /tmp/ballerina-2201.12.3-swan-lake-linux-x64.deb https://dist.baller
 
 # Download VSCode extensions
 RUN curl --compressed -L -o /tmp/wso2.ballerina-integrator-1.0.0.vsix "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/wso2/vsextensions/ballerina-integrator/1.0.0/vspackage" \
-    && curl --compressed -L -o /tmp/wso2.ballerina-5.1.0.vsix "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/wso2/vsextensions/ballerina/5.1.0/vspackage" \
+    && curl --compressed -L -o /tmp/wso2.ballerina-5.1.1.vsix "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/wso2/vsextensions/ballerina/5.1.1/vspackage" \
     && curl --compressed -L -o /tmp/anweber.httpbook-3.2.6.vsix "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anweber/vsextensions/httpbook/3.2.6/vspackage" \
     && curl --compressed -L -o /tmp/anweber.vscode-httpyac-6.16.7.vsix "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/anweber/vsextensions/vscode-httpyac/6.16.7/vspackage" \
     && curl --compressed -L -o /tmp/wso2.wso2-platform-1.0.11.vsix "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/wso2/vsextensions/wso2-platform/1.0.11/vspackage" \
@@ -79,7 +79,7 @@ RUN mkdir -p /opt/project-template \
 
 # Pre-install VS Code extensions to the global location
 RUN mkdir -p /opt/code-server/extensions \
-    && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/wso2.ballerina-5.1.0.vsix \
+    && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/wso2.ballerina-5.1.1.vsix \
     && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/wso2.ballerina-integrator-1.0.0.vsix \
     && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/anweber.httpbook-3.2.6.vsix \
     && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/anweber.vscode-httpyac-6.16.7.vsix \
