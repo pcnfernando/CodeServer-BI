@@ -112,6 +112,15 @@ cat > /tmp/config/Machine/settings.json <<EOL
 }
 EOL
 
+mkdir -p /tmp/data/User
+cat > /tmp/data/User/settings.json <<EOL
+{
+    "ballerina-vscode.trace.server": "verbose",
+    "ballerina.traceLog": true,
+    "ballerina.debugLog": true
+}
+EOL
+
 # Start code-server in the background with redirected paths
 echo "Starting code-server on port 8080 with auth disabled for WebSockets..."
 "$CODE_SERVER_BIN" \
