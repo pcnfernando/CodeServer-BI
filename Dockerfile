@@ -38,16 +38,15 @@ RUN curl -o /tmp/ballerina-2201.12.3-swan-lake-linux-x64.deb https://dist.baller
 RUN mkdir -p /tmp/extensions
 
 # Copy local VSCode extensions instead of downloading them
-COPY ./resources/wso2.ballerina-integrator-1.0.1.vsix /tmp/extensions/ || \
-    (echo "Error: ballerina-integrator-1.0.1.vsix not found in resources directory" && \
-     mkdir -p ./resources && exit 1)
-     
-COPY ./resources/wso2.ballerina-5.1.1.vsix /tmp/extensions/ || \
-    (echo "Error: ballerina-5.1.1.vsix not found in resources directory" && \
-     exit 1)
+COPY ./resources/ballerina-integrator-1.0.1.vsix /tmp/extensions/
+COPY ./resources/ballerina-5.1.1.vsix /tmp/extensions/
 
-# Set correct permissions on the extensions directory
-RUN chmod -R 755 /tmp/extensions && \
+# Verify extensions were copied correctly and set permissions
+RUN if [ ! -f /tmp/extensions/ballerina-integrator-1.0.1.vsix ] || [ ! -f /tmp/extensions/ballerina-5.1.1.vsix ]; then \
+    echo "Error: Required Ballerina extensions not found in resources directory"; \
+    exit 1; \
+    fi && \
+    chmod -R 755 /tmp/extensions && \
     chown -R root:root /tmp/extensions
 
 # Download remaining VSCode extensions
@@ -94,8 +93,8 @@ RUN mkdir -p /opt/project-template \
 # Pre-install VS Code extensions to the global location
 RUN mkdir -p /opt/code-server/extensions \
     && echo "Installing Ballerina extensions from local files..." \
-    && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/extensions/wso2.ballerina-5.1.1.vsix \
-    && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/extensions/wso2.ballerina-integrator-1.0.1.vsix \
+    && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/extensions/ballerina-5.1.1.vsix \
+    && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/extensions/ballerina-integrator-1.0.1.vsix \
     && echo "Installing additional extensions from downloaded files..." \
     && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/extensions/anweber.httpbook-3.2.6.vsix \
     && code-server --extensions-dir=/opt/code-server/extensions --install-extension /tmp/extensions/anweber.vscode-httpyac-6.16.7.vsix \
