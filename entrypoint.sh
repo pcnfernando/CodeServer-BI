@@ -117,7 +117,8 @@ cat > /tmp/data/User/settings.json <<EOL
 {
     "ballerina-vscode.trace.server": "verbose",
     "ballerina.traceLog": true,
-    "ballerina.debugLog": true
+    "ballerina.debugLog": true,
+    "ballerina.enableRunFast": true
 }
 EOL
 
